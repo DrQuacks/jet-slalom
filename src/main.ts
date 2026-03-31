@@ -16,6 +16,7 @@ function setStatus(message: string, tone: "loading" | "ready" | "error" = "loadi
 }
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
+const gameCard = document.querySelector<HTMLElement>(".game-card");
 
 if (!canvas) {
   throw new Error("Game canvas not found.");
@@ -64,6 +65,7 @@ let crashTimer = 0;
 let roadScroll = 0;
 let obstacles: Obstacle[] = [];
 let nextSpawnZ = -0.18;
+let pendingContinue = false;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -134,6 +136,10 @@ function triggerCrash(): void {
   setStatus("Crash! Press Space to continue.", "error");
 }
 
+function continueGame(): void {
+  pendingContinue = true;
+}
+
 function obstacleAtPlayerPlane(obstacle: Obstacle): boolean {
   return obstacle.z > playerPlaneZ - 0.035 && obstacle.z < playerPlaneZ + 0.06;
 }
@@ -142,6 +148,12 @@ function update(delta: number): void {
   roadScroll += delta * 0.8;
 
   if (crashed) {
+    if (pendingContinue) {
+      resetGame(false);
+      pendingContinue = false;
+      setStatus("Game live. Classic mode.", "ready");
+      return;
+    }
     crashTimer = Math.max(0, crashTimer - delta);
     return;
   }
@@ -308,7 +320,7 @@ function drawOverlay(): void {
   ctx.fillStyle = "#ffffff";
   ctx.font = "400 16px Trebuchet MS";
   ctx.textAlign = "center";
-  ctx.fillText(crashed ? "Press Space to continue" : "Use left and right to slalom", width / 2, 90);
+  ctx.fillText(crashed ? "Press Space to continue" : "Use left and right to slalom [build 5]", width / 2, 90);
   ctx.textAlign = "start";
 }
 
@@ -337,28 +349,49 @@ function loop(timestamp: number): void {
   requestAnimationFrame(loop);
 }
 
-function setKey(code: string, pressed: boolean): void {
-  if (code === "ArrowLeft" || code === "KeyA") {
+function shouldContinue(code: string, key: string): boolean {
+  return code === "Space" || code === "Enter" || key === " " || key === "Spacebar" || key === "Enter";
+}
+
+function setKey(code: string, key: string, pressed: boolean): void {
+  if (code === "ArrowLeft" || code === "KeyA" || key === "ArrowLeft" || key === "a" || key === "A") {
     controls.left = pressed;
   }
-  if (code === "ArrowRight" || code === "KeyD") {
+  if (code === "ArrowRight" || code === "KeyD" || key === "ArrowRight" || key === "d" || key === "D") {
     controls.right = pressed;
   }
-  if (pressed && code === "Space" && crashed) {
-    resetGame(false);
-    setStatus("Game live. Classic mode.", "ready");
+  if (pressed && crashed && shouldContinue(code, key)) {
+    continueGame();
   }
 }
 
 window.addEventListener("keydown", (event) => {
-  if (["ArrowLeft", "ArrowRight", "Space"].includes(event.code)) {
+  if (crashed && shouldContinue(event.code, event.key)) {
+    event.preventDefault();
+    continueGame();
+    return;
+  }
+
+  if (["ArrowLeft", "ArrowRight", "Space", "Enter"].includes(event.code) || [" ", "Spacebar", "Enter"].includes(event.key)) {
     event.preventDefault();
   }
-  setKey(event.code, true);
+  setKey(event.code, event.key, true);
 });
 
 window.addEventListener("keyup", (event) => {
-  setKey(event.code, false);
+  setKey(event.code, event.key, false);
+});
+
+canvas.addEventListener("pointerdown", () => {
+  if (crashed) {
+    continueGame();
+  }
+});
+
+gameCard?.addEventListener("pointerdown", () => {
+  if (crashed) {
+    continueGame();
+  }
 });
 
 resetGame();

@@ -1,4 +1,5 @@
 const statusEl = document.querySelector("#status");
+const gameCard = document.querySelector(".game-card");
 function setStatus(message, tone = "loading") {
   if (!statusEl) {
     return;
@@ -43,6 +44,7 @@ let crashTimer = 0;
 let roadScroll = 0;
 let obstacles = [];
 let nextSpawnZ = -0.18;
+let pendingContinue = false;
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -102,12 +104,21 @@ function triggerCrash() {
   hiScore = Math.max(hiScore, Math.floor(score));
   setStatus("Crash! Press Space to continue.", "error");
 }
+function continueGame() {
+  pendingContinue = true;
+}
 function obstacleAtPlayerPlane(obstacle) {
   return obstacle.z > playerPlaneZ - 0.035 && obstacle.z < playerPlaneZ + 0.06;
 }
 function update(delta) {
   roadScroll += delta * 0.8;
   if (crashed) {
+    if (pendingContinue) {
+      resetGame(false);
+      pendingContinue = false;
+      setStatus("Game live. Classic mode.", "ready");
+      return;
+    }
     crashTimer = Math.max(0, crashTimer - delta);
     return;
   }
@@ -244,7 +255,7 @@ function drawOverlay() {
   ctx.fillStyle = "#ffffff";
   ctx.font = "400 16px Trebuchet MS";
   ctx.textAlign = "center";
-  ctx.fillText(crashed ? "Press Space to continue" : "Use left and right to slalom", width / 2, 90);
+  ctx.fillText(crashed ? "Press Space to continue" : "Use left and right to slalom [build 5]", width / 2, 90);
   ctx.textAlign = "start";
 }
 function render() {
@@ -269,26 +280,43 @@ function loop(timestamp) {
   render();
   requestAnimationFrame(loop);
 }
-function setKey(code, pressed) {
-  if (code === "ArrowLeft" || code === "KeyA") {
+function shouldContinue(code, key) {
+  return code === "Space" || code === "Enter" || key === " " || key === "Spacebar" || key === "Enter";
+}
+function setKey(code, key, pressed) {
+  if (code === "ArrowLeft" || code === "KeyA" || key === "ArrowLeft" || key === "a" || key === "A") {
     controls.left = pressed;
   }
-  if (code === "ArrowRight" || code === "KeyD") {
+  if (code === "ArrowRight" || code === "KeyD" || key === "ArrowRight" || key === "d" || key === "D") {
     controls.right = pressed;
   }
-  if (pressed && code === "Space" && crashed) {
-    resetGame(false);
-    setStatus("Game live. Classic mode.", "ready");
+  if (pressed && crashed && shouldContinue(code, key)) {
+    continueGame();
   }
 }
 window.addEventListener("keydown", (event) => {
-  if (["ArrowLeft", "ArrowRight", "Space"].includes(event.code)) {
+  if (crashed && shouldContinue(event.code, event.key)) {
+    event.preventDefault();
+    continueGame();
+    return;
+  }
+  if (["ArrowLeft", "ArrowRight", "Space", "Enter"].includes(event.code) || [" ", "Spacebar", "Enter"].includes(event.key)) {
     event.preventDefault();
   }
-  setKey(event.code, true);
+  setKey(event.code, event.key, true);
 });
 window.addEventListener("keyup", (event) => {
-  setKey(event.code, false);
+  setKey(event.code, event.key, false);
+});
+canvas.addEventListener("pointerdown", () => {
+  if (crashed) {
+    continueGame();
+  }
+});
+gameCard == null ? void 0 : gameCard.addEventListener("pointerdown", () => {
+  if (crashed) {
+    continueGame();
+  }
 });
 resetGame();
 render();
