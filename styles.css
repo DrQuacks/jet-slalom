@@ -1,0 +1,145 @@
+:root {
+  color-scheme: only light;
+  --bg: #07131f;
+  --panel: rgba(7, 30, 49, 0.84);
+  --panel-border: rgba(181, 229, 255, 0.18);
+  --text: #e7f7ff;
+  --muted: #9ec9de;
+  --accent: #ffd166;
+  --accent-2: #7ae582;
+  --shadow: 0 24px 50px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Trebuchet MS", "Avenir Next Condensed", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top, rgba(67, 124, 171, 0.28), transparent 34%),
+    linear-gradient(180deg, #103153 0%, var(--bg) 58%, #030912 100%);
+}
+
+.shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  padding: 24px 0;
+}
+
+.hud-card,
+.game-card {
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.hud-card {
+  padding: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: 0.75rem;
+  color: var(--accent);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.1rem, 4vw, 3.3rem);
+  line-height: 0.95;
+}
+
+.lede {
+  margin: 16px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.controls {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+  display: grid;
+  gap: 14px;
+}
+
+.controls li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(123, 197, 255, 0.08);
+}
+
+.controls span {
+  color: var(--muted);
+}
+
+.controls strong {
+  text-align: right;
+}
+
+.game-card {
+  position: relative;
+  padding: 12px;
+}
+
+.status {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  z-index: 2;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(5, 20, 34, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #d8f3ff;
+  font-size: 0.9rem;
+}
+
+.status.is-ready {
+  background: rgba(18, 72, 37, 0.86);
+  color: #dbffe2;
+}
+
+.status.is-error {
+  border-radius: 14px;
+  max-width: min(520px, calc(100% - 44px));
+  background: rgba(111, 28, 28, 0.92);
+  color: #ffe6e6;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 18px;
+  image-rendering: pixelated;
+  background: #1f9ae6;
+}
+
+@media (max-width: 940px) {
+  .shell {
+    grid-template-columns: 1fr;
+    width: min(960px, calc(100vw - 20px));
+    padding: 12px 0 20px;
+  }
+
+  .hud-card {
+    padding: 20px;
+  }
+}

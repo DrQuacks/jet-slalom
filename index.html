@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jet Slalom TS</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <link rel="stylesheet" href="./styles.css?v=2" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hud-card">
+        <p class="eyebrow">Arcade Prototype</p>
+        <h1>Jet Slalom</h1>
+        <p class="lede">
+          Slalom through the river gates, dodge hazards, and keep the jet powered
+          up long enough to chase a high score.
+        </p>
+        <ul class="controls">
+          <li><span>Steer</span><strong>Arrow keys / WASD</strong></li>
+          <li><span>Boost line</span><strong>Thread the gates cleanly</strong></li>
+          <li><span>Restart</span><strong>Space after a crash</strong></li>
+        </ul>
+      </section>
+      <section class="game-card">
+        <div id="status" class="status">Loading game…</div>
+        <canvas id="game" width="400" height="332" aria-label="Jet Slalom game"></canvas>
+      </section>
+    </main>
+    <script>
+      const bootStatus = document.getElementById("status");
+      const setBootMessage = (message) => {
+        if (bootStatus) {
+          bootStatus.textContent = message;
+        }
+      };
+
+      window.addEventListener("error", (event) => {
+        setBootMessage(`Startup error: ${event.message || "script failed"}`);
+      });
+
+      setBootMessage("Bootstrapping game...");
+
+      const gameScript = document.createElement("script");
+      gameScript.src = "./dist/main.js?v=4";
+      gameScript.defer = true;
+      gameScript.onload = () => {
+        setBootMessage("Bundle loaded.");
+      };
+      gameScript.onerror = () => {
+        setBootMessage("Failed to load game bundle.");
+      };
+      document.body.appendChild(gameScript);
+    </script>
+  </body>
+  </html>
