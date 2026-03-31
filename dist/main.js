@@ -30,7 +30,6 @@ const playTop = topHudHeight;
 const playBottom = height - bottomHudHeight;
 const horizonY = 182;
 const playerY = playBottom - 20;
-const laneCenters = [-116, -56, 0, 56, 116];
 const obstacleColors = ["#8f6b1d", "#7d560f", "#666666", "#8a8a8a"];
 const playerPlaneZ = 0.83;
 let score = 0;
@@ -57,13 +56,15 @@ function perspectiveScale(z) {
 }
 function laneToScreenX(lane, z) {
   const perspective = 0.18 + Math.pow(z, 1.35) * 0.96;
-  return width / 2 + lane * perspective;
+  return width / 2 + (lane - playerLane) * perspective;
 }
 function obstacleScreenY(z) {
   return horizonY + Math.pow(z, 1.7) * (playBottom - horizonY - 6);
 }
 function spawnRow(z, openingLane) {
-  const lanes = laneCenters.filter((lane) => Math.abs(lane - openingLane) > 6);
+  const candidateOffsets = [-180, -130, -80, -30, 20, 70, 120, 170];
+  const candidateLanes = candidateOffsets.map((offset) => playerLane + offset);
+  const lanes = candidateLanes.filter((lane) => Math.abs(lane - openingLane) > 32);
   const rowCount = Math.random() > 0.7 ? 3 : 2;
   const chosen = lanes.sort(() => Math.random() - 0.5).slice(0, rowCount);
   chosen.forEach((lane, index) => {
@@ -79,7 +80,7 @@ function spawnRow(z, openingLane) {
 }
 function spawnAhead() {
   while (nextSpawnZ < 0.08) {
-    const openingLane = laneCenters[Math.floor(Math.random() * laneCenters.length)];
+    const openingLane = playerLane - 120 + Math.random() * 240;
     spawnRow(nextSpawnZ, openingLane);
     nextSpawnZ += 0.19 + Math.random() * 0.08;
   }
@@ -135,7 +136,6 @@ function update(delta) {
   if (controls.right) {
     targetLane += delta * 170;
   }
-  targetLane = clamp(targetLane, laneCenters[0], laneCenters[laneCenters.length - 1]);
   playerLane += (targetLane - playerLane) * Math.min(1, delta * 10);
   const speed = 0.56 + Math.min(score / 4e4, 0.55);
   for (const obstacle of obstacles) {
@@ -213,7 +213,7 @@ function drawObstacleForeground(obstacle) {
   ctx.fillRect(x - baseWidth * 0.5, y, baseWidth, Math.max(4, scale * 3));
 }
 function drawPlayer() {
-  const x = width / 2 + playerLane * 0.58;
+  const x = width / 2;
   const y = playerY;
   ctx.save();
   ctx.translate(x, y);
