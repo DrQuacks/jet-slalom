@@ -81,9 +81,11 @@ function spawnAhead() {
     nextSpawnZ += 0.19 + Math.random() * 0.08;
   }
 }
-function resetGame() {
+function resetGame(resetPenalty = true) {
   score = 0;
-  continuePenalty = 0;
+  if (resetPenalty) {
+    continuePenalty = 0;
+  }
   playerLane = 0;
   targetLane = 0;
   crashed = false;
@@ -274,10 +276,8 @@ function setKey(code, pressed) {
   if (code === "ArrowRight" || code === "KeyD") {
     controls.right = pressed;
   }
-  if (pressed && code === "Space" && crashed && crashTimer === 0) {
-    playerLane = 0;
-    targetLane = 0;
-    crashed = false;
+  if (pressed && code === "Space" && crashed) {
+    resetGame(false);
     setStatus("Game live. Classic mode.", "ready");
   }
 }

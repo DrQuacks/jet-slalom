@@ -111,9 +111,11 @@ function spawnAhead(): void {
   }
 }
 
-function resetGame(): void {
+function resetGame(resetPenalty = true): void {
   score = 0;
-  continuePenalty = 0;
+  if (resetPenalty) {
+    continuePenalty = 0;
+  }
   playerLane = 0;
   targetLane = 0;
   crashed = false;
@@ -342,10 +344,8 @@ function setKey(code: string, pressed: boolean): void {
   if (code === "ArrowRight" || code === "KeyD") {
     controls.right = pressed;
   }
-  if (pressed && code === "Space" && crashed && crashTimer === 0) {
-    playerLane = 0;
-    targetLane = 0;
-    crashed = false;
+  if (pressed && code === "Space" && crashed) {
+    resetGame(false);
     setStatus("Game live. Classic mode.", "ready");
   }
 }
