@@ -45,6 +45,7 @@ let roadScroll = 0;
 let obstacles = [];
 let nextSpawnZ = -0.18;
 let pendingContinue = false;
+let bankAngle = 0;
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -93,6 +94,7 @@ function resetGame(resetPenalty = true) {
   crashed = false;
   crashTimer = 0;
   roadScroll = 0;
+  bankAngle = 0;
   obstacles = [];
   nextSpawnZ = -1.1;
   spawnAhead();
@@ -124,6 +126,9 @@ function update(delta) {
   }
   score += delta * 850;
   hiScore = Math.max(hiScore, Math.floor(score));
+  const steeringInput = (controls.right ? 1 : 0) - (controls.left ? 1 : 0);
+  const targetBankAngle = steeringInput * -0.15;
+  bankAngle += (targetBankAngle - bankAngle) * Math.min(1, delta * 9);
   if (controls.left) {
     targetLane -= delta * 170;
   }
@@ -155,10 +160,11 @@ function drawHudBar(y, h) {
   ctx.fillRect(0, y, width, h);
 }
 function drawPlayfield() {
+  const pad = 160;
   ctx.fillStyle = "#1f9ae6";
-  ctx.fillRect(0, playTop, width, horizonY - playTop);
+  ctx.fillRect(-pad, playTop - pad, width + pad * 2, horizonY - playTop + pad);
   ctx.fillStyle = "#04d83d";
-  ctx.fillRect(0, horizonY, width, playBottom - horizonY);
+  ctx.fillRect(-pad, horizonY, width + pad * 2, playBottom - horizonY + pad);
 }
 function drawGroundLines() {
   ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
@@ -167,8 +173,8 @@ function drawGroundLines() {
     const z = (roadScroll * 0.75 + i * 0.16) % 1;
     const y = obstacleScreenY(z);
     ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
+    ctx.moveTo(-180, y);
+    ctx.lineTo(width + 180, y);
     ctx.stroke();
   }
 }
@@ -207,12 +213,10 @@ function drawObstacleForeground(obstacle) {
   ctx.fillRect(x - baseWidth * 0.5, y, baseWidth, Math.max(4, scale * 3));
 }
 function drawPlayer() {
-  const x = width / 2 + playerLane;
+  const x = width / 2 + playerLane * 0.58;
   const y = playerY;
-  const offset = (targetLane - playerLane) * 0.08;
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(offset);
   ctx.fillStyle = "#112c88";
   ctx.fillRect(-58, -5, 116, 10);
   ctx.fillRect(-42, -12, 84, 8);
@@ -255,20 +259,33 @@ function drawOverlay() {
   ctx.fillStyle = "#ffffff";
   ctx.font = "400 16px Trebuchet MS";
   ctx.textAlign = "center";
-  ctx.fillText(crashed ? "Press Space to continue" : "Use left and right to slalom [build 5]", width / 2, 90);
+  ctx.fillText(crashed ? "Press Space to continue" : "Use left and right to slalom [build 6]", width / 2, 90);
   ctx.textAlign = "start";
 }
-function render() {
-  ctx.clearRect(0, 0, width, height);
-  drawHudBar(0, topHudHeight);
+function drawWorld() {
   drawPlayfield();
   drawGroundLines();
   const sortedObstacles = obstacles.slice().sort((a, b) => a.z - b.z);
   const backgroundObstacles = sortedObstacles.filter((obstacle) => obstacle.z < playerPlaneZ);
   const foregroundObstacles = sortedObstacles.filter((obstacle) => obstacle.z >= playerPlaneZ);
   backgroundObstacles.forEach(drawObstacle);
-  drawPlayer();
   foregroundObstacles.forEach(drawObstacleForeground);
+}
+function render() {
+  ctx.clearRect(0, 0, width, height);
+  drawHudBar(0, topHudHeight);
+  const playfieldCenterY = playTop + (playBottom - playTop) / 2;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, playTop, width, playBottom - playTop);
+  ctx.clip();
+  ctx.translate(width / 2, playfieldCenterY);
+  ctx.rotate(bankAngle);
+  ctx.translate(bankAngle * 46, 0);
+  ctx.translate(-width / 2, -playfieldCenterY);
+  drawWorld();
+  ctx.restore();
+  drawPlayer();
   drawHudBar(playBottom, bottomHudHeight);
   drawHudText();
   drawOverlay();
